@@ -30,7 +30,7 @@ The primary goal of this project is to analyze historical movie data and help st
 🚀 Enable smarter pre-release decisions using predictive analytics  
 
 🧠 Key Learnings  
-✅ Learned to clean and transform real-world movie data    
+✅ Learned to clean and transform real-world movie of large data    
 📈 Built and evaluated regression models using scikit-learn  
 📊 Understood how feature importance can be extracted and visualized  
 🛠️ Practiced full ML workflow: cleaning → modeling → evaluation → visualization
