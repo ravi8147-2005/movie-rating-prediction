@@ -10,24 +10,24 @@ Original file is located at
 import pandas as pd
 from ast import literal_eval
 
-#Step 1: Load the data
+# Load the data
 movies_df = pd.read_csv('tmdb_5000_movies.csv')
 credits_df = pd.read_csv('tmdb_5000_credits.csv')
 
-# Step 2: Merge datasets on 'id'
+# Merge datasets on id
 credits_df.rename(columns={'movie_id': 'id'}, inplace=True)
 merged_df = movies_df.merge(credits_df, on='id')
 
-# Step 3: Extract genres
+# Extract genres
 merged_df['genres'] = merged_df['genres'].apply(lambda x: [i['name'] for i in literal_eval(x)])
 
-# Step 4: Extract top 3 actors
+# Extract top 3 actors
 def get_top_cast(cast_str):
     cast_list = literal_eval(cast_str)
     return [actor['name'] for actor in cast_list[:3]]
 merged_df['top_cast'] = merged_df['cast'].apply(get_top_cast)
 
-# Step 5: Extract director
+# Extract director
 def get_director(crew_str):
     crew_list = literal_eval(crew_str)
     for crew in crew_list:
@@ -36,7 +36,6 @@ def get_director(crew_str):
     return None
 merged_df['director'] = merged_df['crew'].apply(get_director)
 
-# Step 6: Save cleaned dataset for SQL/Power BI
 merged_df.to_csv('cleaned_movies.csv', index=False)
 
 import pandas as pd
@@ -72,18 +71,17 @@ y = df['vote_average'].values
 print("✅ Feature matrix shape:", X.shape)
 print("✅ Target shape:", y.shape)
 
-with open("cleaned_movies_fixed.csv", 'r', encoding='utf-8', errors='ignore') as f:
+with open("cleaned_movies_fixed_clean.csv", 'r', encoding='utf-8', errors='ignore') as f:
     lines = f.readlines()
 
 clean_lines = [line for line in lines if line.count('"') % 2 == 0]
 
-with open("cleaned_movies_fixed_clean.csv", 'w', encoding='utf-8') as f:
+with open("cleaned_movies.csv", 'w', encoding='utf-8') as f:
     f.writelines(clean_lines)
 
 # Load the fixed file
-df = pd.read_csv("cleaned_movies_fixed_clean.csv")
+df = pd.read_csv("cleaned_movies.csv")
 
-# Check for non-numeric values in numeric columns
 for col in ['budget', 'runtime', 'popularity']:
     non_numeric = df[~df[col].apply(lambda x: str(x).replace('.', '', 1).isdigit())]
     if not non_numeric.empty:
@@ -100,21 +98,26 @@ df[['budget', 'runtime', 'popularity']] = df[['budget', 'runtime', 'popularity']
 print("Unique values in vote_average:")
 print(df['vote_average'].unique()[:20])
 
-# Convert vote_average to numeric (non-numeric will become NaN)
+# Convert vote_average to numeric
 df['vote_average'] = pd.to_numeric(df['vote_average'], errors='coerce')
 
-# Drop rows where vote_average is missing (can't train without target)
+# Drop rows where vote_average is missing
 df = df.dropna(subset=['vote_average'])
 
-# Rebuild y
 y = df['vote_average'].values
 
-# If needed: rebuild features
+# Fill missing values for text columns
+df[['genres', 'director', 'top_cast']] = df[['genres', 'director', 'top_cast']].fillna('')
+
+df['combined_text'] = df['genres'] + ' ' + df['director'] + ' ' + df['top_cast']
+
+text_features = vectorizer.transform(df['combined_text']).toarray()
+
+# rebuild features
 text_features = vectorizer.transform(df['combined_text']).toarray()
 numeric_features = df[['budget', 'runtime', 'popularity']].values
 X = np.hstack((text_features, numeric_features))
 
-# Re-split and train again
 from sklearn.model_selection import train_test_split
 from sklearn.linear_model import LinearRegression
 from sklearn.metrics import r2_score, mean_squared_error
@@ -131,11 +134,9 @@ print("✅ Mean Squared Error:", mean_squared_error(y_test, y_pred))
 
 from sklearn.ensemble import RandomForestRegressor
 
-# Create and train the Random Forest model
 rf_model = RandomForestRegressor(n_estimators=100, random_state=42)
 rf_model.fit(X_train, y_train)
 
-# Predict and evaluate
 y_rf_pred = rf_model.predict(X_test)
 
 print("🌲 R² Score (Random Forest):", r2_score(y_test, y_rf_pred))
