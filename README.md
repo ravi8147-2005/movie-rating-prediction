@@ -37,4 +37,4 @@ The primary goal of this project is to analyze historical movie data and help st
 
 📬 Let's Connect!  
 I’m always open to feedback, collaboration, or freelance data science and data analyst projects.  
-📫 Connect with me on [LinkedIn](www.linkedin.com/in/rudrappakattimani)  
+📫 Connect with me on [LinkedIn](https://www.linkedin.com/in/rudrappakattimani/)
